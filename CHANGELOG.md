@@ -8,10 +8,12 @@ Each section covers one minor version; every entry is prefixed with the patch re
 that shipped it. Releases before 1.0.0 are only listed on
 [GitHub Releases](https://github.com/David-Crty/databasement/releases).
 
-## [1.7] - 2026-09-07
+## [1.7] - 2026-09-18
 
 ### Added
 
+- `1.7.15` The Snapshots page filters on flags through an "All Snapshots / File missing / Locked" dropdown, so locked snapshots can be found without scanning every row; links to `?fileMissing=1` in older notification emails still open the missing-file filter ([#618](https://github.com/David-Crty/databasement/pull/618))
+- `1.7.15` The interface is available in Simplified Chinese ([#538](https://github.com/David-Crty/databasement/pull/538))
 - `1.7.14` SSH tunnels have an optional compression setting, on the database server form and the SSH config API, which trades CPU for bandwidth when the tunnel runs over a slow link ([#543](https://github.com/David-Crty/databasement/pull/543))
 - `1.7.13` The French, Spanish, Greek and Traditional Chinese interfaces are fully translated and use consistent wording: about 38% of the strings fell back to English in each locale, and page titles, path validation messages and several flash messages could not be translated at all ([#602](https://github.com/David-Crty/databasement/pull/602)) ([#603](https://github.com/David-Crty/databasement/pull/603))
 - `1.7.12` The v1 REST API is rate limited, 300 requests a minute per access token by default; `API_RATE_LIMIT` raises or lowers the ceiling and `0` turns it off where a gateway already throttles. The agent daemon routes and the web interface are not affected ([#524](https://github.com/David-Crty/databasement/pull/524))
@@ -36,6 +38,7 @@ that shipped it. Releases before 1.0.0 are only listed on
 
 ### Fixed
 
+- `1.7.15` The Previous and Next pagination buttons show their label instead of the raw `pagination.previous` and `pagination.next` keys ([#619](https://github.com/David-Crty/databasement/pull/619))
 - `1.7.12` The `latest` Docker image is published from the release tag only, so it can no longer be overwritten by a concurrent build of `main` that carries no version number, which blanked the version badge and the update dialog. The tip of `main` is published as `edge` ([#601](https://github.com/David-Crty/databasement/pull/601))
 - `1.7.10` A form that fails validation raises a toast, expands the collapsed section holding the first invalid field and scrolls it into view with focus; the connection test buttons validate the same way ([#598](https://github.com/David-Crty/databasement/pull/598))
 - `1.7.9` A command log no longer shows a running spinner forever when the job dies before the command finishes (queue timeout, killed worker, fatal error); it is marked failed together with the job ([#541](https://github.com/David-Crty/databasement/pull/541))
@@ -270,7 +273,7 @@ that shipped it. Releases before 1.0.0 are only listed on
 - `1.0.5` An empty `TRUSTED_PROXIES` value falls back to the default private network ranges instead of trusting no proxy at all, which broke fresh Kubernetes installs ([#184](https://github.com/David-Crty/databasement/pull/184))
 - `1.0.2` SQLite backups no longer miss recent writes on databases in WAL mode: the SQLite client's online backup is used instead of copying the file, remote SQLite over SFTP also fetches the `-wal` and `-shm` companion files (flagged best-effort when present), and a missing source file fails the backup instead of producing an empty one ([#174](https://github.com/David-Crty/databasement/pull/174))
 
-[1.7]: https://github.com/David-Crty/databasement/compare/v1.6.12...v1.7.14
+[1.7]: https://github.com/David-Crty/databasement/compare/v1.6.12...v1.7.15
 [1.6]: https://github.com/David-Crty/databasement/compare/v1.5.6...v1.6.12
 [1.5]: https://github.com/David-Crty/databasement/compare/v1.4.2...v1.5.6
 [1.4]: https://github.com/David-Crty/databasement/compare/v1.3.1...v1.4.2
