@@ -14,6 +14,16 @@ Each section covers one minor version; every entry is prefixed with the patch re
 that shipped it. Releases before 1.0.0 are only listed on
 [GitHub Releases](https://github.com/David-Crty/databasement/releases).
 
+## [1.8] - 2026-09-20 {#v1-8}
+
+### Added
+
+- `1.8.0` A scheduled restore that is disabled can still be run on demand: "Run now" asks for confirmation, runs the flow and leaves it paused, so a flow meant to run only manually no longer has to be enabled and disabled around every run. The button also reports the real outcome instead of always claiming success ([#626](https://github.com/David-Crty/databasement/pull/626))
+
+### Fixed
+
+- `1.8.0` MySQL 5.5 and 5.6 and MariaDB below 10.2 can be backed up: the image now ships Oracle's MySQL client alongside `mariadb-dump` and each server is dumped with the client its version needs, which also retires the 1.7.1 workaround that dropped stored routines from the dumps of MySQL 26.x servers. The dump command preview on the server form names the client the backup would really run ([#627](https://github.com/David-Crty/databasement/pull/627)) ([#628](https://github.com/David-Crty/databasement/pull/628))
+
 ## [1.7] - 2026-09-18 {#v1-7}
 
 ### Added
@@ -279,6 +289,7 @@ that shipped it. Releases before 1.0.0 are only listed on
 - `1.0.5` An empty `TRUSTED_PROXIES` value falls back to the default private network ranges instead of trusting no proxy at all, which broke fresh Kubernetes installs ([#184](https://github.com/David-Crty/databasement/pull/184))
 - `1.0.2` SQLite backups no longer miss recent writes on databases in WAL mode: the SQLite client's online backup is used instead of copying the file, remote SQLite over SFTP also fetches the `-wal` and `-shm` companion files (flagged best-effort when present), and a missing source file fails the backup instead of producing an empty one ([#174](https://github.com/David-Crty/databasement/pull/174))
 
+[1.8]: https://github.com/David-Crty/databasement/compare/v1.7.15...v1.8.0
 [1.7]: https://github.com/David-Crty/databasement/compare/v1.6.12...v1.7.15
 [1.6]: https://github.com/David-Crty/databasement/compare/v1.5.6...v1.6.12
 [1.5]: https://github.com/David-Crty/databasement/compare/v1.4.2...v1.5.6

@@ -807,7 +807,7 @@ sudo apt install -y mariadb-client
 ```
 
 :::note
-Databasement uses the MariaDB CLI tools (`mariadb-dump`, `mariadb`) to back up and restore both MariaDB and MySQL servers.
+On a native install Databasement uses the MariaDB CLI tools (`mariadb-dump`, `mariadb`) for both MariaDB and MySQL servers. The Docker image also ships Oracle's `mysqldump` and runs it for MySQL servers and for MariaDB servers below 10.2, which `mariadb-dump` cannot read; a native install has only the MariaDB client, so those servers are not supported here.
 :::
 
 ### For PostgreSQL backups
@@ -2062,6 +2062,16 @@ Each section covers one minor version; every entry is prefixed with the patch re
 that shipped it. Releases before 1.0.0 are only listed on
 [GitHub Releases](https://github.com/David-Crty/databasement/releases).
 
+## [1.8] - 2026-09-20 {#v1-8}
+
+### Added
+
+- `1.8.0` A scheduled restore that is disabled can still be run on demand: "Run now" asks for confirmation, runs the flow and leaves it paused, so a flow meant to run only manually no longer has to be enabled and disabled around every run. The button also reports the real outcome instead of always claiming success ([#626](https://github.com/David-Crty/databasement/pull/626))
+
+### Fixed
+
+- `1.8.0` MySQL 5.5 and 5.6 and MariaDB below 10.2 can be backed up: the image now ships Oracle's MySQL client alongside `mariadb-dump` and each server is dumped with the client its version needs, which also retires the 1.7.1 workaround that dropped stored routines from the dumps of MySQL 26.x servers. The dump command preview on the server form names the client the backup would really run ([#627](https://github.com/David-Crty/databasement/pull/627)) ([#628](https://github.com/David-Crty/databasement/pull/628))
+
 ## [1.7] - 2026-09-18 {#v1-7}
 
 ### Added
@@ -2327,6 +2337,7 @@ that shipped it. Releases before 1.0.0 are only listed on
 - `1.0.5` An empty `TRUSTED_PROXIES` value falls back to the default private network ranges instead of trusting no proxy at all, which broke fresh Kubernetes installs ([#184](https://github.com/David-Crty/databasement/pull/184))
 - `1.0.2` SQLite backups no longer miss recent writes on databases in WAL mode: the SQLite client's online backup is used instead of copying the file, remote SQLite over SFTP also fetches the `-wal` and `-shm` companion files (flagged best-effort when present), and a missing source file fails the backup instead of producing an empty one ([#174](https://github.com/David-Crty/databasement/pull/174))
 
+[1.8]: https://github.com/David-Crty/databasement/compare/v1.7.15...v1.8.0
 [1.7]: https://github.com/David-Crty/databasement/compare/v1.6.12...v1.7.15
 [1.6]: https://github.com/David-Crty/databasement/compare/v1.5.6...v1.6.12
 [1.5]: https://github.com/David-Crty/databasement/compare/v1.4.2...v1.5.6
@@ -2417,20 +2428,20 @@ Database servers are the source of your backups. Databasement can connect to and
 
 Databasement uses standard CLI tools to perform backup and restore operations. The table below shows which database engine versions are supported, based on the CLI tools shipped in the Docker image.
 
-| Engine     | Supported Versions           | CLI Tool                     | Restore |
-|------------|------------------------------|------------------------------|---------|
-| MySQL      | 5.6, 5.7, 8.x, 9.x, 26.x     | `mariadb-dump`               | Yes     |
-| MariaDB    | 10.x, 11.x, 12.x             | `mariadb-dump`               | Yes     |
-| PostgreSQL | 12, 13, 14, 15, 16, 17, 18   | `pg_dump` v16 / v18          | Yes     |
-| SQL Server | 2017, 2019, 2022, Azure SQL  | `sqlpackage` (`.dacpac`)     | Yes     |
-| MongoDB    | 4.2, 4.4, 5.0, 6.0, 7.0, 8.0 | `mongodump` / `mongorestore` | Yes     |
-| SQLite     | 3.x                          | File copy                    | Yes     |
-| Firebird   | 3.x, 4.x, 5.x                | `gbak` v5                    | Yes     |
-| Redis      | 2.8+                         | `redis-cli --rdb`            | No      |
-| Valkey     | 7.2+                         | `redis-cli --rdb`            | No      |
+| Engine     | Supported Versions            | CLI Tool                     | Restore |
+|------------|-------------------------------|------------------------------|---------|
+| MySQL      | 5.5, 5.6, 5.7, 8.x, 9.x, 26.x | `mysqldump`                  | Yes     |
+| MariaDB    | 5.x, 10.x, 11.x, 12.x         | `mariadb-dump` / `mysqldump` | Yes     |
+| PostgreSQL | 12, 13, 14, 15, 16, 17, 18    | `pg_dump` v16 / v18          | Yes     |
+| SQL Server | 2017, 2019, 2022, Azure SQL   | `sqlpackage` (`.dacpac`)     | Yes     |
+| MongoDB    | 4.2, 4.4, 5.0, 6.0, 7.0, 8.0  | `mongodump` / `mongorestore` | Yes     |
+| SQLite     | 3.x                           | File copy                    | Yes     |
+| Firebird   | 3.x, 4.x, 5.x                 | `gbak` v5                    | Yes     |
+| Redis      | 2.8+                          | `redis-cli --rdb`            | No      |
+| Valkey     | 7.2+                          | `redis-cli --rdb`            | No      |
 
 :::info How this works
-- **MySQL / MariaDB**: Databasement ships the MariaDB 11.4 client (`mariadb-dump`), which is wire-protocol compatible with MySQL servers. On MySQL 26.0 and later, stored procedures and functions are left out of the dump: the client reads MySQL's new YY.M version number (9.7 → 26.7) as a MariaDB one and asks for stored packages, which MySQL rejects. Tables, data, views and triggers are unaffected, and the job logs a warning.
+- **MySQL / MariaDB**: Databasement ships both vendors' clients and picks one from the version the server reports. MariaDB servers from 10.2 on are dumped by `mariadb-dump`, the client that knows their own extensions. MySQL servers are dumped by Oracle's `mysqldump`, because the MariaDB client reads MySQL's YY.M version number (9.7 → 26.7) as a MariaDB one and asks for stored packages MySQL rejects. MariaDB servers below 10.2 also go to `mysqldump`: `mariadb-dump` reads a column from `information_schema` that only exists from 10.2 on, and no flag turns that off. Nothing needs configuring, and a server whose version cannot be read keeps `mariadb-dump`. Any extra dump flags you set on a server are passed to whichever client it uses, so they have to be flags that client accepts: `--column-statistics=0`, for instance, exists only in `mysqldump`.
 - **PostgreSQL**: Databasement ships both the v16 and the v18 client and runs whichever one matches the server: v16 for servers up to 16, v18 for 17 and later. A dump only replays into a server at least as new as the client that wrote it, so a single v18 client would produce snapshots that no server below 17 could restore, not even the one they came from. Each client dumps from any server back to 9.2. Versions below 12 have reached end-of-life and are not recommended.
 - **SQL Server**: Backups are extracted as `.dacpac` files (schema + table data) using Microsoft's `sqlpackage` CLI (`/Action:Extract`) and re-applied with `/Action:Publish`. Server-bound objects (logins, users, permissions, role memberships) are excluded so backups stay portable across instances and don't fail on Windows-auth principals like `[NT AUTHORITY\SYSTEM]`. Works against on-prem SQL Server 2017+ and Azure SQL Database. Connections use the `pdo_sqlsrv` PHP extension.
 - **MongoDB**: The MongoDB Database Tools (`mongodump` / `mongorestore`) officially support server versions 4.2 through 8.0.
@@ -2950,9 +2961,15 @@ When you create a backup, Databasement:
 
 Databasement uses native database tools for reliable backups:
 
-**MySQL/MariaDB:**
+**MariaDB** (10.2 and later):
 ```bash
-mariadb-dump --routines --add-drop-table --complete-insert --hex-blob --quote-names --skip_ssl \
+mariadb-dump --single-transaction --routines --add-drop-table --hex-blob --quote-names --skip_ssl \
+  --host='...' --port='...' --user='...' --password='...' 'database_name' > dump.sql
+```
+
+**MySQL** (and MariaDB below 10.2), using the bundled Oracle client:
+```bash
+/opt/mysql-client/bin/mysqldump --single-transaction --routines --add-drop-table --hex-blob --quote-names --ssl-mode=DISABLED \
   --host='...' --port='...' --user='...' --password='...' 'database_name' > dump.sql
 ```
 
@@ -3114,10 +3131,16 @@ When you restore a snapshot, Databasement:
 
 ### Restore Commands
 
-**MySQL/MariaDB:**
+**MariaDB** (10.2 and later):
 ```bash
 mariadb --host='...' --port='...' --user='...' --password='...' --skip_ssl \
   'database_name' -e "source /path/to/dump.sql"
+```
+
+**MySQL** (and MariaDB below 10.2), using the bundled Oracle client:
+```bash
+/opt/mysql-client/bin/mysql --host='...' --port='...' --user='...' --password='...' --ssl-mode=DISABLED \
+  'database_name' < '/path/to/dump.sql'
 ```
 
 **PostgreSQL:**
@@ -3717,7 +3740,7 @@ Ensure tests pass before committing.
 **Backup Process:**
 1. Connect to database server
 2. Establish SSH tunnel if configured
-3. Execute database-specific dump (mariadb-dump/pg_dump/sqlpackage/mongodump/redis-cli/cp)
+3. Execute database-specific dump (mariadb-dump/mysqldump/pg_dump/sqlpackage/mongodump/redis-cli/cp)
 4. Compress with gzip
 5. Upload to configured volume (local/S3)
 6. Record snapshot metadata
