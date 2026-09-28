@@ -7,6 +7,7 @@
     "prepare": "husky"
   },
   "dependencies": {
+    "@cloudflare/containers": "^0.3.7",
     "@tailwindcss/vite": "^4.3.2",
     "autoprefixer": "^10.5.4",
     "axios": "^1.19.0",
@@ -23,6 +24,7 @@
   },
   "devDependencies": {
     "daisyui": "^5.7.7",
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "wrangler": "^4.142.0"
   }
 }

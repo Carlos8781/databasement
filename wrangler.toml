@@ -1,0 +1,37 @@
+name = "databasement"
+main = "src/index.js"
+compatibility_date = "2026-08-28"
+compatibility_flags = ["nodejs_compat"]
+
+# Wake the container regularly so Laravel's scheduler and queue worker can
+# continue processing jobs even when the HTTP UI has no traffic.
+[triggers]
+crons = ["*/5 * * * *"]
+
+[vars]
+APP_URL = "https://SEU-DOMINIO"
+DB_CONNECTION = "mysql"
+DB_PORT = "3306"
+DB_DATABASE = "databasement"
+SESSION_DRIVER = "database"
+SESSION_ENCRYPT = "true"
+SESSION_SECURE_COOKIE = "true"
+FILESYSTEM_DISK = "s3"
+QUEUE_CONNECTION = "database"
+CACHE_STORE = "database"
+AWS_DEFAULT_REGION = "auto"
+AWS_USE_PATH_STYLE_ENDPOINT = "true"
+
+[[containers]]
+class_name = "DatabasementContainer"
+image = "./Dockerfile"
+instance_type = "standard-2"
+max_instances = 1
+
+[[durable_objects.bindings]]
+name = "DATABASEMENT_CONTAINER"
+class_name = "DatabasementContainer"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DatabasementContainer"]
