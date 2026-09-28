@@ -1,0 +1,28 @@
+# Databasement hosted on a Docker machine and exposed privately through Cloudflare Tunnel.
+# Create the tunnel in Cloudflare Zero Trust, then set CLOUDFLARE_TUNNEL_TOKEN in .env.
+services:
+  databasement:
+    image: davidcrty/databasement:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:2226:2226"
+    env_file: .env
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: ${APP_URL}
+      DB_CONNECTION: sqlite
+      DB_DATABASE: /data/database.sqlite
+      ENABLE_QUEUE_WORKER: "true"
+    volumes:
+      - databasement-data:/data
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      - databasement
+
+volumes:
+  databasement-data:
